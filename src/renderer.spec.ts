@@ -35,6 +35,14 @@ describe("Renderer", () => {
 			showCardPreviews: true,
 			showBuylist: true,
 			hidePrices: false,
+			enableAdvancedFeatures: false,
+			groupByType: false,
+			sortByManaCost: false,
+			showSearchFilter: false,
+			showStatistics: false,
+			showManaCurveChart: false,
+			showTypeDistributionChart: false,
+			showColorDistributionChart: false,
 		},
 	};
 

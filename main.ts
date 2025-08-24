@@ -22,6 +22,14 @@ const DEFAULT_SETTINGS: ObsidianPluginMtgSettings = {
 		showCardPreviews: true,
 		showBuylist: true,
 		hidePrices: false,
+		enableAdvancedFeatures: true,
+		groupByType: false,
+		sortByManaCost: false,
+		showSearchFilter: false,
+		showStatistics: false,
+		showManaCurveChart: true,
+		showTypeDistributionChart: true,
+		showColorDistributionChart: true,
 	},
 };
 
@@ -70,6 +78,37 @@ export default class ObsidianPluginMtg extends Plugin {
 						source,
 						this.cardCounts,
 						this.settings
+					);
+				} catch (err) {
+					error = err;
+					console.log(err);
+					const errorNode = document.createDiv({
+						text: error,
+						cls: "obsidian-plugin-mtg-error",
+					});
+					el.appendChild(errorNode);
+				}
+			}
+		);
+
+		this.registerMarkdownCodeBlockProcessor(
+			"mtg-list",
+			async (source: string, el: HTMLElement, ctx) => {
+				let error = null;
+
+				// Sync card counts once if they haven't been already
+				if (!this.cardCounts) {
+					this.cardCounts = await syncCounts(vault, this.settings);
+				}
+
+				try {
+					await renderDecklist(
+						el,
+						source,
+						this.cardCounts,
+						this.settings,
+						undefined,
+						true // isGenericList flag
 					);
 				} catch (err) {
 					error = err;
@@ -225,6 +264,122 @@ class ObsidianPluginMtgSettingsTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.decklist.hidePrices)
 					.onChange(async (value: boolean) => {
 						this.plugin.settings.decklist.hidePrices = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		containerEl.createEl("h3", {
+			text: "Advanced Features",
+		});
+
+		new Setting(containerEl)
+			.setName("Enable Advanced Features")
+			.setDesc(
+				"Enables grouping, sorting, and filtering options for decklists"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(
+						this.plugin.settings.decklist.enableAdvancedFeatures
+					)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.enableAdvancedFeatures =
+							value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Group by Card Type")
+			.setDesc("Groups cards by type (Creature, Land, Instant, etc.)")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.decklist.groupByType)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.groupByType = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Sort by Mana Cost")
+			.setDesc("Sorts cards within groups by mana cost")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.decklist.sortByManaCost)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.sortByManaCost = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Show Search Filter")
+			.setDesc("Shows a search box to filter cards in decklists")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.decklist.showSearchFilter)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.showSearchFilter = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		containerEl.createEl("h3", {
+			text: "Deck Statistics",
+		});
+
+		new Setting(containerEl)
+			.setName("Show Statistics")
+			.setDesc("Shows deck statistics and charts below decklists")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.decklist.showStatistics)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.showStatistics = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Show Mana Curve Chart")
+			.setDesc("Shows mana cost distribution chart")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.decklist.showManaCurveChart)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.showManaCurveChart =
+							value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Show Type Distribution Chart")
+			.setDesc("Shows card type distribution pie chart")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(
+						this.plugin.settings.decklist.showTypeDistributionChart
+					)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.showTypeDistributionChart =
+							value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Show Color Distribution Chart")
+			.setDesc("Shows color requirements by mana cost")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(
+						this.plugin.settings.decklist.showColorDistributionChart
+					)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.showColorDistributionChart =
+							value;
 						await this.plugin.saveSettings();
 					})
 			);

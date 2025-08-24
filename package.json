@@ -12,6 +12,7 @@
 		"verify": "npm run test && npm run lint && npm run format-check",
 		"prepare": "husky install",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"deploy": "npm run build && mkdir -p '/Users/eberharter/Documents/Macbook/.obsidian/plugins/obsidian-mtg' && cp main.js manifest.json styles.css '/Users/eberharter/Documents/Macbook/.obsidian/plugins/obsidian-mtg/'",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"engines": {

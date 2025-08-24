@@ -20,5 +20,15 @@ export interface ObsidianPluginMtgSettings {
 		showBuylist: boolean;
 		// Show prices
 		hidePrices: boolean;
+		// Advanced features
+		enableAdvancedFeatures: boolean;
+		groupByType: boolean;
+		sortByManaCost: boolean;
+		showSearchFilter: boolean;
+		// Statistics
+		showStatistics: boolean;
+		showManaCurveChart: boolean;
+		showTypeDistributionChart: boolean;
+		showColorDistributionChart: boolean;
 	};
 }

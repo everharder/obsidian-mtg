@@ -2,13 +2,15 @@
 
 This is a plugin to manage your Magic: The Gathering card collections and decks as Obsidian notes.
 
-## Decklists
+## Decklists and Card Lists
+
+### Decklists
 
 Using the `mtg-deck` syntax hint in any Markdown file, you can define your decklists as follows:
 
 ```mtgdeck
 4 Delver of Secrets // Insectile Aberration
-4 Haughty Djinn
+4x Haughty Djinn
 3 Tolarian Terror
 4 Consider
 4 Essence Scatter
@@ -35,6 +37,28 @@ Which in turn renders as:
 ![](docs/img/example_decklist.png)
 
 You can also copy paste directly from MTGA exports, though setlists and collector's numbers will not be shown and are not yet supported in the renderer.
+
+### General Card Lists
+
+For general card lists (inventory, wishlists, trade binders, etc.), use the `mtg-list` syntax:
+
+```mtglist
+2x Black Lotus
+1 Mox Ruby
+4x Lightning Bolt
+1 Ancestral Recall
+
+Wishlist:
+1x Time Walk
+1x Timetwister
+```
+
+Both formats support quantities with or without the "x" suffix (e.g., "4 Lightning Bolt" or "4x Lightning Bolt").
+
+Card lists work similarly to decklists but with these differences:
+- Default section is "Cards:" instead of "Deck:"
+- No buylist is generated (since these aren't necessarily for purchasing)
+- Same collection tracking and pricing features as decklists
 
 ## Collections
 
