@@ -18,5 +18,8 @@ main.js
 # obsidian
 data.json
 
+# Local scripts
+deploy-local.sh
+
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
