@@ -1022,11 +1022,12 @@ export const renderDecklist = async (
 		linesBySection = newLinesBySection;
 	}
 
-	// Apply advanced features if enabled and this is a decklist (not generic list)
+	// Apply type grouping if enabled or in mobile mode for better organization
 	if (
 		!isGenericList &&
-		settings.decklist.enableAdvancedFeatures &&
-		settings.decklist.groupByType
+		((settings.decklist.enableAdvancedFeatures &&
+			settings.decklist.groupByType) ||
+			settings.decklist.mobileMode)
 	) {
 		// Reorganize sections by card type
 		const newLinesBySection: Record<string, Line[]> = {};
@@ -1051,9 +1052,12 @@ export const renderDecklist = async (
 					cardDataByCardId
 				);
 
-				// Sort each group by mana cost if enabled
+				// Sort each group by mana cost if enabled or in mobile mode
 				Object.keys(cardGroups).forEach((groupName) => {
-					if (settings.decklist.sortByManaCost) {
+					if (
+						settings.decklist.sortByManaCost ||
+						settings.decklist.mobileMode
+					) {
 						cardGroups[groupName] = sortCardsByManaCost(
 							cardGroups[groupName],
 							cardDataByCardId
@@ -1116,7 +1120,10 @@ export const renderDecklist = async (
 		});
 
 		sections = orderedSections;
-	} else if (settings.decklist.sortByManaCost && !isGenericList) {
+	} else if (
+		(settings.decklist.sortByManaCost || settings.decklist.mobileMode) &&
+		!isGenericList
+	) {
 		// Just sort by mana cost within existing sections
 		sections.forEach((sectionName) => {
 			const sectionCards = linesBySection[sectionName].filter(
@@ -1531,8 +1538,8 @@ export const renderDecklist = async (
 
 		sectionContainer.appendChild(sectionList);
 
-		// Skip divider and totals for commander sections
-		if (section !== "Commander") {
+		// Skip divider and totals for commander sections and mobile mode
+		if (section !== "Commander" && !settings.decklist.mobileMode) {
 			const horizontalDividorEl = document.createElement("hr");
 			sectionContainer.appendChild(horizontalDividorEl);
 

@@ -156,6 +156,10 @@ class ObsidianPluginMtgSettingsTab extends PluginSettingTab {
 			text: "Settings for Obsidian MtG Plugin.",
 		});
 
+		containerEl.createEl("h3", {
+			text: "Collection Management",
+		});
+
 		// Collection CSV setting
 		new Setting(containerEl)
 			.setName("Collection CSV")
@@ -192,6 +196,24 @@ class ObsidianPluginMtgSettingsTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.collection.countColumn)
 					.onChange(async (value) => {
 						this.plugin.settings.collection.countColumn = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		containerEl.createEl("h3", {
+			text: "Display & Appearance",
+		});
+
+		new Setting(containerEl)
+			.setName("Mobile Mode")
+			.setDesc(
+				"Enables mobile-optimized layout with compact design, automatic categorization, and click-to-view card images"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.decklist.mobileMode)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.mobileMode = value;
 						await this.plugin.saveSettings();
 					})
 			);
@@ -265,20 +287,6 @@ class ObsidianPluginMtgSettingsTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.decklist.hidePrices)
 					.onChange(async (value: boolean) => {
 						this.plugin.settings.decklist.hidePrices = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("Mobile Mode")
-			.setDesc(
-				"Enables mobile-optimized layout with compact design, no prices, and click-to-view card images"
-			)
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.decklist.mobileMode)
-					.onChange(async (value: boolean) => {
-						this.plugin.settings.decklist.mobileMode = value;
 						await this.plugin.saveSettings();
 					})
 			);
