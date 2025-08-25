@@ -1701,9 +1701,13 @@ export const renderDecklist = async (
 									);
 								}
 
-								// Set position
+								// Set position with buffer to prevent hover interference
+								const leftOffset = Math.max(
+									cardCommentsEl.offsetLeft + 20,
+									300
+								);
 								imgElContainer.style.top = `${topPosition}px`;
-								imgElContainer.style.left = `${cardCommentsEl.offsetLeft}px`;
+								imgElContainer.style.left = `${leftOffset}px`;
 								imgEl.src = imgUri;
 							}
 						});

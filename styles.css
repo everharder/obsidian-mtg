@@ -75,6 +75,7 @@ span.comment {
 
 .card-image {
 	height: 400px;
+	pointer-events: none;
 }
 
 .buylist-container {
@@ -113,6 +114,7 @@ span.comment {
 	text-align: right;
 	position: absolute;
 	z-index: 1;
+	pointer-events: none;
 }
 
 .buy-button {
