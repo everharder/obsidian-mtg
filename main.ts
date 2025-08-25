@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS: ObsidianPluginMtgSettings = {
 		showCardPreviews: true,
 		showBuylist: true,
 		hidePrices: false,
+		mobileMode: false,
 		enableAdvancedFeatures: true,
 		groupByType: false,
 		sortByManaCost: false,
@@ -264,6 +265,20 @@ class ObsidianPluginMtgSettingsTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.decklist.hidePrices)
 					.onChange(async (value: boolean) => {
 						this.plugin.settings.decklist.hidePrices = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Mobile Mode")
+			.setDesc(
+				"Enables mobile-optimized layout with compact design, no prices, and click-to-view card images"
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.decklist.mobileMode)
+					.onChange(async (value: boolean) => {
+						this.plugin.settings.decklist.mobileMode = value;
 						await this.plugin.saveSettings();
 					})
 			);

@@ -7,6 +7,7 @@ import {
 } from "./scryfall";
 import { ObsidianPluginMtgSettings } from "./settings";
 import { createDiv, createSpan } from "./dom-utils";
+import { showMobileCardImage } from "./mobile-utils";
 
 const DEFAULT_DECK_SECTION_NAME = "Deck:";
 const DEFAULT_LIST_SECTION_NAME = "Cards:";
@@ -762,7 +763,10 @@ export const getCardPrice = (
 	const cardData = cardDataById[cardId];
 	const preferredCurrency = settings.decklist.preferredCurrency;
 	const hidePrices = settings.decklist.hidePrices;
-	if (!cardData || hidePrices) {
+	const mobileMode = settings.decklist.mobileMode;
+
+	// Hide prices if explicitly disabled or in mobile mode
+	if (!cardData || hidePrices || mobileMode) {
 		return null;
 	} else {
 		if (preferredCurrency === "eur") {
@@ -1137,7 +1141,7 @@ export const renderDecklist = async (
 
 	// Header section
 	const header = createDiv(containerEl, {
-		cls: "header",
+		cls: settings.decklist.mobileMode ? "header mobile-header" : "header",
 	});
 
 	// Add advanced controls
@@ -1172,6 +1176,9 @@ export const renderDecklist = async (
 		// Put the entire deck in containing div for styling
 		const sectionContainer = document.createElement("div");
 		sectionContainer.classList.add("decklist__section-container");
+		if (settings.decklist.mobileMode) {
+			sectionContainer.classList.add("mobile-section");
+		}
 
 		// Create a heading
 		const sectionHedingEl = document.createElement("h3");
@@ -1188,6 +1195,9 @@ export const renderDecklist = async (
 		linesBySection[section].forEach((line: Line) => {
 			const lineEl = document.createElement("li");
 			lineEl.classList.add("decklist__section-list-item");
+			if (settings.decklist.mobileMode) {
+				lineEl.classList.add("mobile-card-item");
+			}
 
 			// Add special styling for commanders
 			if (line.lineType === "commander") {
@@ -1336,61 +1346,74 @@ export const renderDecklist = async (
 				}
 
 				if (settings.decklist.showCardPreviews) {
-					// Event handlers for card artwork popover
-					lineEl.addEventListener("mouseenter", () => {
-						const cardId = nameToId(line.cardName);
-						const cardInfo = cardDataByCardId[cardId];
-						let imgUri: string | undefined;
-						if (cardInfo) {
-							// For single-faced cards...
-							if (cardInfo.image_uris) {
-								imgUri = cardInfo.image_uris?.large;
-								// For double-faced cards...
-							} else if (
-								cardInfo.card_faces &&
-								cardInfo.card_faces.length > 1
-							) {
-								// Use the front-side of the card for preview
-								imgUri =
-									cardInfo.card_faces[0].image_uris?.large;
-							}
-							// Calculate positioning with bounds checking
-							const offsetPaddingTop = 16;
-							const imageHeight = 400; // matches .card-image height in CSS
-							const containerRect =
-								containerEl.getBoundingClientRect();
-							const lineRect = lineEl.getBoundingClientRect();
+					const cardId = nameToId(line.cardName);
+					const cardInfo = cardDataByCardId[cardId];
+					let imgUri: string | undefined;
 
-							// Calculate initial top position
-							let topPosition =
-								lineEl.offsetTop + offsetPaddingTop;
-
-							// Check if image would extend beyond container bottom
-							if (
-								topPosition + imageHeight >
-								containerEl.scrollHeight
-							) {
-								// Position above the line instead, with some padding
-								topPosition = Math.max(
-									0,
-									lineEl.offsetTop -
-										imageHeight -
-										offsetPaddingTop
-								);
-							}
-
-							// Set position
-							imgElContainer.style.top = `${topPosition}px`;
-							imgElContainer.style.left = `${cardCommentsEl.offsetLeft}px`;
+					if (cardInfo) {
+						// For single-faced cards...
+						if (cardInfo.image_uris) {
+							imgUri = cardInfo.image_uris?.large;
+							// For double-faced cards...
+						} else if (
+							cardInfo.card_faces &&
+							cardInfo.card_faces.length > 1
+						) {
+							// Use the front-side of the card for preview
+							imgUri = cardInfo.card_faces[0].image_uris?.large;
 						}
-						if (typeof imgUri !== "undefined") {
-							imgEl.src = imgUri;
-						}
-					});
+					}
 
-					lineEl.addEventListener("mouseleave", () => {
-						imgEl.src = "";
-					});
+					if (settings.decklist.mobileMode) {
+						// Mobile: use click to show centered overlay
+						if (imgUri) {
+							lineEl.style.cursor = "pointer";
+							lineEl.addEventListener("click", (e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								showMobileCardImage(imgUri!);
+							});
+						}
+					} else {
+						// Desktop: use hover as before
+						lineEl.addEventListener("mouseenter", () => {
+							if (imgUri) {
+								// Calculate positioning with bounds checking
+								const offsetPaddingTop = 16;
+								const imageHeight = 400; // matches .card-image height in CSS
+								const containerRect =
+									containerEl.getBoundingClientRect();
+								const lineRect = lineEl.getBoundingClientRect();
+
+								// Calculate initial top position
+								let topPosition =
+									lineEl.offsetTop + offsetPaddingTop;
+
+								// Check if image would extend beyond container bottom
+								if (
+									topPosition + imageHeight >
+									containerEl.scrollHeight
+								) {
+									// Position above the line instead, with some padding
+									topPosition = Math.max(
+										0,
+										lineEl.offsetTop -
+											imageHeight -
+											offsetPaddingTop
+									);
+								}
+
+								// Set position
+								imgElContainer.style.top = `${topPosition}px`;
+								imgElContainer.style.left = `${cardCommentsEl.offsetLeft}px`;
+								imgEl.src = imgUri;
+							}
+						});
+
+						lineEl.addEventListener("mouseleave", () => {
+							imgEl.src = "";
+						});
+					}
 				}
 
 				sectionList.appendChild(lineEl);
@@ -1419,67 +1442,85 @@ export const renderDecklist = async (
 				sectionHedingEl.textContent = commanderName;
 				sectionHedingEl.classList.add("commander-heading");
 
-				// Add hover functionality to show card image
-				if (cardInfo && cardInfo.image_uris) {
-					sectionHedingEl.style.cursor = "pointer";
+				// Add image functionality for commanders
+				if (cardInfo) {
+					let imgUri: string | undefined;
+					if (cardInfo.image_uris) {
+						imgUri = cardInfo.image_uris?.large;
+					} else if (
+						cardInfo.card_faces &&
+						cardInfo.card_faces.length > 1
+					) {
+						imgUri = cardInfo.card_faces[0].image_uris?.large;
+					}
 
-					sectionHedingEl.addEventListener("mouseenter", () => {
-						let imgUri: string | undefined;
-						if (cardInfo.image_uris) {
-							imgUri = cardInfo.image_uris?.large;
-						} else if (
-							cardInfo.card_faces &&
-							cardInfo.card_faces.length > 1
-						) {
-							imgUri = cardInfo.card_faces[0].image_uris?.large;
+					if (imgUri) {
+						sectionHedingEl.style.cursor = "pointer";
+
+						if (settings.decklist.mobileMode) {
+							// Mobile: use click to show centered overlay
+							sectionHedingEl.addEventListener("click", (e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								showMobileCardImage(imgUri!);
+							});
+						} else {
+							// Desktop: use hover as before
+							sectionHedingEl.addEventListener(
+								"mouseenter",
+								() => {
+									// Calculate positioning with bounds checking
+									const offsetPaddingTop = 16;
+									const imageHeight = 400;
+									const containerRect =
+										containerEl.getBoundingClientRect();
+									const headingRect =
+										sectionHedingEl.getBoundingClientRect();
+
+									let topPosition =
+										sectionHedingEl.offsetTop +
+										offsetPaddingTop;
+
+									if (
+										topPosition + imageHeight >
+										containerEl.scrollHeight
+									) {
+										topPosition =
+											sectionHedingEl.offsetTop -
+											imageHeight -
+											offsetPaddingTop;
+									}
+
+									const leftPosition =
+										containerEl.offsetWidth - 320;
+
+									const imgEl = containerEl.querySelector(
+										".card-image"
+									) as HTMLImageElement;
+									if (imgEl) {
+										imgEl.src = imgUri!;
+										imgEl.style.top = `${topPosition}px`;
+										imgEl.style.left = `${Math.max(
+											leftPosition,
+											0
+										)}px`;
+									}
+								}
+							);
+
+							sectionHedingEl.addEventListener(
+								"mouseleave",
+								() => {
+									const imgEl = containerEl.querySelector(
+										".card-image"
+									) as HTMLImageElement;
+									if (imgEl) {
+										imgEl.src = "";
+									}
+								}
+							);
 						}
-
-						if (imgUri) {
-							// Calculate positioning with bounds checking
-							const offsetPaddingTop = 16;
-							const imageHeight = 400;
-							const containerRect =
-								containerEl.getBoundingClientRect();
-							const headingRect =
-								sectionHedingEl.getBoundingClientRect();
-
-							let topPosition =
-								sectionHedingEl.offsetTop + offsetPaddingTop;
-
-							if (
-								topPosition + imageHeight >
-								containerEl.scrollHeight
-							) {
-								topPosition =
-									sectionHedingEl.offsetTop -
-									imageHeight -
-									offsetPaddingTop;
-							}
-
-							const leftPosition = containerEl.offsetWidth - 320;
-
-							const imgEl = containerEl.querySelector(
-								".card-image"
-							) as HTMLImageElement;
-							if (imgEl) {
-								imgEl.src = imgUri;
-								imgEl.style.top = `${topPosition}px`;
-								imgEl.style.left = `${Math.max(
-									leftPosition,
-									0
-								)}px`;
-							}
-						}
-					});
-
-					sectionHedingEl.addEventListener("mouseleave", () => {
-						const imgEl = containerEl.querySelector(
-							".card-image"
-						) as HTMLImageElement;
-						if (imgEl) {
-							imgEl.src = "";
-						}
-					});
+					}
 				}
 			} else {
 				sectionHedingEl.textContent = `${section}`;

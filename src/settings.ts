@@ -20,6 +20,8 @@ export interface ObsidianPluginMtgSettings {
 		showBuylist: boolean;
 		// Show prices
 		hidePrices: boolean;
+		// Mobile mode
+		mobileMode: boolean;
 		// Advanced features
 		enableAdvancedFeatures: boolean;
 		groupByType: boolean;

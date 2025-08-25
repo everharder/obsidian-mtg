@@ -60,6 +60,7 @@ describe("Collection", () => {
 				showCardPreviews: true,
 				showBuylist: true,
 				hidePrices: false,
+				mobileMode: false,
 				enableAdvancedFeatures: false,
 				groupByType: false,
 				sortByManaCost: false,
