@@ -116,6 +116,178 @@ export const groupCardsByType = (
 	return groups;
 };
 
+export const getCardColorGroup = (cardData?: CardData): string => {
+	// Check if it's a land first
+	if (cardData?.type_line?.toLowerCase().includes("land")) {
+		return "Lands";
+	}
+
+	if (!cardData?.color_identity || cardData.color_identity.length === 0) {
+		return "Colorless";
+	}
+
+	const colors = cardData.color_identity.sort();
+
+	// Single colors
+	if (colors.length === 1) {
+		switch (colors[0]) {
+			case "W":
+				return "White";
+			case "U":
+				return "Blue";
+			case "B":
+				return "Black";
+			case "R":
+				return "Red";
+			case "G":
+				return "Green";
+			default:
+				return "Colorless";
+		}
+	}
+
+	// Two-color combinations (Guild names)
+	if (colors.length === 2) {
+		const combo = colors.join("");
+		switch (combo) {
+			case "UW":
+				return "Azorius (W/U)";
+			case "BW":
+				return "Orzhov (W/B)";
+			case "GW":
+				return "Selesnya (W/G)";
+			case "RW":
+				return "Boros (W/R)";
+			case "BU":
+				return "Dimir (U/B)";
+			case "GU":
+				return "Simic (U/G)";
+			case "RU":
+				return "Izzet (U/R)";
+			case "BG":
+				return "Golgari (B/G)";
+			case "BR":
+				return "Rakdos (B/R)";
+			case "GR":
+				return "Gruul (R/G)";
+			default:
+				return "Multicolor";
+		}
+	}
+
+	// Three-color combinations (Shard/Wedge names)
+	if (colors.length === 3) {
+		const combo = colors.join("");
+		switch (combo) {
+			case "GUW":
+				return "Bant (G/W/U)";
+			case "BUW":
+				return "Esper (W/U/B)";
+			case "BGR":
+				return "Jund (B/R/G)";
+			case "GRW":
+				return "Naya (R/G/W)";
+			case "BRU":
+				return "Grixis (U/B/R)";
+			case "BGW":
+				return "Abzan (W/B/G)";
+			case "GRU":
+				return "Temur (G/U/R)";
+			case "BRW":
+				return "Mardu (R/W/B)";
+			case "BGU":
+				return "Sultai (B/G/U)";
+			case "RUW":
+				return "Jeskai (U/R/W)";
+			default:
+				return "Multicolor";
+		}
+	}
+
+	// Four or five colors
+	if (colors.length === 4) {
+		return "Four-Color";
+	}
+
+	if (colors.length === 5) {
+		return "Five-Color";
+	}
+
+	return "Multicolor";
+};
+
+export const groupCardsByColor = (
+	cards: Line[],
+	cardDataById: Record<string, CardData>
+): Record<string, Line[]> => {
+	const groups: Record<string, Line[]> = {};
+
+	cards.forEach((card) => {
+		if (card.lineType === "card" || card.lineType === "commander") {
+			const cardId = nameToId(card.cardName);
+			const cardData = cardDataById[cardId];
+			const group = getCardColorGroup(cardData);
+
+			if (!groups[group]) {
+				groups[group] = [];
+			}
+			groups[group].push(card);
+		}
+	});
+
+	return groups;
+};
+
+export const getColorCssClass = (sectionName: string): string | null => {
+	// Handle prefixed section names (e.g., "Inventory - White")
+	const colorName = sectionName.split(" - ").pop() || sectionName;
+
+	if (colorName.includes("White")) return "mtg-color-white";
+	if (
+		colorName.includes("Blue") ||
+		colorName.includes("Azorius") ||
+		colorName.includes("Dimir") ||
+		colorName.includes("Simic") ||
+		colorName.includes("Izzet")
+	)
+		return "mtg-color-blue";
+	if (
+		colorName.includes("Black") ||
+		colorName.includes("Orzhov") ||
+		colorName.includes("Golgari") ||
+		colorName.includes("Rakdos")
+	)
+		return "mtg-color-black";
+	if (
+		colorName.includes("Red") ||
+		colorName.includes("Boros") ||
+		colorName.includes("Gruul")
+	)
+		return "mtg-color-red";
+	if (colorName.includes("Green") || colorName.includes("Selesnya"))
+		return "mtg-color-green";
+	if (colorName.includes("Colorless")) return "mtg-color-colorless";
+	if (colorName.includes("Lands")) return "mtg-color-lands";
+	if (
+		colorName.includes("Bant") ||
+		colorName.includes("Esper") ||
+		colorName.includes("Jund") ||
+		colorName.includes("Naya") ||
+		colorName.includes("Grixis") ||
+		colorName.includes("Abzan") ||
+		colorName.includes("Temur") ||
+		colorName.includes("Mardu") ||
+		colorName.includes("Sultai") ||
+		colorName.includes("Jeskai") ||
+		colorName.includes("Four-Color") ||
+		colorName.includes("Five-Color") ||
+		colorName.includes("Multicolor")
+	)
+		return "mtg-color-multicolor";
+
+	return null;
+};
+
 // Statistics and chart generation
 interface DeckStatistics {
 	manaCurve: Record<number, number>;
@@ -1022,8 +1194,118 @@ export const renderDecklist = async (
 		linesBySection = newLinesBySection;
 	}
 
-	// Apply type grouping if enabled or in mobile mode for better organization
-	if (
+	// Apply color grouping for mtg-list (generic lists)
+	if (isGenericList) {
+		// Reorganize sections by card color
+		const newLinesBySection: Record<string, Line[]> = {};
+
+		sections.forEach((sectionName) => {
+			const sectionCards = linesBySection[sectionName].filter(
+				(line) => line.lineType === "card"
+			);
+			const sectionComments = linesBySection[sectionName].filter(
+				(line) => line.lineType === "comment"
+			);
+
+			if (sectionCards.length > 0) {
+				const cardGroups = groupCardsByColor(
+					sectionCards,
+					cardDataByCardId
+				);
+
+				// Sort each group alphabetically
+				Object.keys(cardGroups).forEach((groupName) => {
+					cardGroups[groupName] = cardGroups[groupName].sort((a, b) =>
+						(a.cardName || "").localeCompare(b.cardName || "")
+					);
+
+					// Create new section for each color group
+					const newSectionName =
+						sectionName === defaultSectionName
+							? groupName
+							: `${sectionName} - ${groupName}`;
+					newLinesBySection[newSectionName] = cardGroups[groupName];
+				});
+			}
+
+			// Add comments to a separate section if they exist
+			if (sectionComments.length > 0) {
+				const commentSectionName =
+					sectionName === defaultSectionName
+						? "Comments"
+						: `${sectionName} - Comments`;
+				newLinesBySection[commentSectionName] = sectionComments;
+			}
+		});
+
+		linesBySection = newLinesBySection;
+
+		// Order sections by color priority (WUBRG + multicolor + colorless + lands)
+		const colorOrder = [
+			"White",
+			"Blue",
+			"Black",
+			"Red",
+			"Green",
+			"Azorius (W/U)",
+			"Orzhov (W/B)",
+			"Selesnya (W/G)",
+			"Boros (W/R)",
+			"Dimir (U/B)",
+			"Simic (U/G)",
+			"Izzet (U/R)",
+			"Golgari (B/G)",
+			"Rakdos (B/R)",
+			"Gruul (R/G)",
+			"Bant (G/W/U)",
+			"Esper (W/U/B)",
+			"Jund (B/R/G)",
+			"Naya (R/G/W)",
+			"Grixis (U/B/R)",
+			"Abzan (W/B/G)",
+			"Temur (G/U/R)",
+			"Mardu (R/W/B)",
+			"Sultai (B/G/U)",
+			"Jeskai (U/R/W)",
+			"Four-Color",
+			"Five-Color",
+			"Multicolor",
+			"Colorless",
+			"Lands",
+			"Comments",
+		];
+
+		const orderedSections: string[] = [];
+
+		colorOrder.forEach((colorName) => {
+			// Check for exact color name match
+			if (linesBySection[colorName]) {
+				orderedSections.push(colorName);
+			}
+
+			// Check for prefixed color names (e.g., "Inventory - White")
+			Object.keys(linesBySection).forEach((sectionName) => {
+				if (
+					sectionName.includes(colorName) &&
+					sectionName !== colorName &&
+					!orderedSections.includes(sectionName)
+				) {
+					orderedSections.push(sectionName);
+				}
+			});
+		});
+
+		// Add any remaining sections that don't match the pattern
+		Object.keys(linesBySection).forEach((sectionName) => {
+			if (!orderedSections.includes(sectionName)) {
+				orderedSections.push(sectionName);
+			}
+		});
+
+		sections = orderedSections;
+	}
+	// Apply type grouping if enabled or in mobile mode for better organization (for decklists only)
+	else if (
 		!isGenericList &&
 		((settings.decklist.enableAdvancedFeatures &&
 			settings.decklist.groupByType) ||
@@ -1190,6 +1472,15 @@ export const renderDecklist = async (
 		// Create a heading
 		const sectionHedingEl = document.createElement("h3");
 		sectionHedingEl.classList.add("decklist__section-heading");
+
+		// Add color-specific CSS classes for mtg-list
+		if (isGenericList) {
+			const colorClass = getColorCssClass(section);
+			if (colorClass) {
+				sectionHedingEl.classList.add(colorClass);
+			}
+		}
+
 		sectionContainer.appendChild(sectionHedingEl);
 
 		// Create container for the list items
@@ -1736,6 +2027,49 @@ export const renderDecklist = async (
 		buylist.appendChild(buylistLineEl);
 
 		footer.appendChild(buylist);
+	}
+
+	// Add overall summary section for desktop only (for both decklists and generic lists)
+	if (!settings.decklist.mobileMode) {
+		const overallTotalCards = Object.values(sectionTotalCounts).reduce(
+			(acc, count) => acc + count,
+			0
+		);
+		const overallTotalCost = Object.values(sectionTotalCost).reduce(
+			(acc, cost) => acc + cost,
+			0.0
+		);
+
+		if (overallTotalCards > 0) {
+			const summaryContainer = createDiv(containerEl, {
+				cls: "mtg-overall-summary",
+			});
+
+			const summaryHeader = document.createElement("h3");
+			summaryHeader.textContent = isGenericList
+				? "Total Summary"
+				: "Overall Summary";
+			summaryHeader.classList.add("mtg-summary-header");
+			summaryContainer.appendChild(summaryHeader);
+
+			const summaryContent = createDiv(summaryContainer, {
+				cls: "mtg-summary-content",
+			});
+
+			createSpan(summaryContent, {
+				cls: "mtg-summary-cards",
+				text: `${overallTotalCards} Cards`,
+			});
+
+			if (hasCardInfo && !settings.decklist.hidePrices) {
+				createSpan(summaryContent, {
+					cls: "mtg-summary-cost",
+					text: `${
+						currencyMapping[settings.decklist.preferredCurrency]
+					}${overallTotalCost.toFixed(2)} Total Value`,
+				});
+			}
+		}
 	}
 
 	containerEl.appendChild(footer);

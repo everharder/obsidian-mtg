@@ -235,6 +235,269 @@ span.comment {
 	}
 }
 
+/* Overall Summary styling */
+.mtg-overall-summary {
+	margin-top: 25px;
+	margin-bottom: 25px;
+	padding: 20px;
+	background: linear-gradient(
+		135deg,
+		var(--background-secondary) 0%,
+		var(--background-primary) 100%
+	);
+	border-radius: 12px;
+	border: 2px solid var(--interactive-accent);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	position: relative;
+	overflow: hidden;
+}
+
+.mtg-overall-summary::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 3px;
+	background: linear-gradient(
+		90deg,
+		var(--interactive-accent) 0%,
+		var(--interactive-accent-hover) 50%,
+		var(--interactive-accent) 100%
+	);
+}
+
+.mtg-summary-header {
+	margin-top: 0;
+	margin-bottom: 16px;
+	color: var(--interactive-accent);
+	font-size: 18px;
+	font-weight: 700;
+	text-align: center;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+}
+
+.mtg-summary-content {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
+	font-size: 16px;
+	font-weight: 600;
+	text-align: center;
+}
+
+.mtg-summary-cards {
+	color: var(--text-normal);
+	background-color: var(--background-primary);
+	padding: 8px 16px;
+	border-radius: 8px;
+	border: 1px solid var(--background-modifier-border);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mtg-summary-cost {
+	color: var(--interactive-accent);
+	background-color: var(--background-primary);
+	padding: 8px 16px;
+	border-radius: 8px;
+	border: 1px solid var(--interactive-accent);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	font-weight: 700;
+}
+
+/* Responsive adjustments for summary */
+@media (max-width: 768px) {
+	.mtg-summary-content {
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.mtg-summary-cards,
+	.mtg-summary-cost {
+		width: 100%;
+		text-align: center;
+	}
+}
+
+/* MTG Color-based section headings for mtg-list */
+.mtg-list .decklist__section-heading {
+	position: relative;
+	padding-left: 12px;
+	border-left: 4px solid var(--background-modifier-border);
+}
+
+/* White */
+.mtg-list .decklist__section-heading:has-text("White"),
+.mtg-list .decklist__section-heading[data-color="white"] {
+	border-left-color: #fffbd5;
+	color: #f8f8f2;
+	background: linear-gradient(
+		90deg,
+		rgba(255, 251, 213, 0.1) 0%,
+		transparent 100%
+	);
+}
+
+/* Blue */
+.mtg-list .decklist__section-heading:has-text("Blue"),
+.mtg-list .decklist__section-heading:has-text("Azorius"),
+.mtg-list .decklist__section-heading:has-text("Dimir"),
+.mtg-list .decklist__section-heading:has-text("Simic"),
+.mtg-list .decklist__section-heading:has-text("Izzet") {
+	border-left-color: #0e68ab;
+	background: linear-gradient(
+		90deg,
+		rgba(14, 104, 171, 0.15) 0%,
+		transparent 100%
+	);
+}
+
+/* Black */
+.mtg-list .decklist__section-heading:has-text("Black"),
+.mtg-list .decklist__section-heading:has-text("Orzhov"),
+.mtg-list .decklist__section-heading:has-text("Golgari"),
+.mtg-list .decklist__section-heading:has-text("Rakdos") {
+	border-left-color: #150b00;
+	background: linear-gradient(
+		90deg,
+		rgba(21, 11, 0, 0.15) 0%,
+		transparent 100%
+	);
+}
+
+/* Red */
+.mtg-list .decklist__section-heading:has-text("Red"),
+.mtg-list .decklist__section-heading:has-text("Boros"),
+.mtg-list .decklist__section-heading:has-text("Gruul") {
+	border-left-color: #d3202a;
+	background: linear-gradient(
+		90deg,
+		rgba(211, 32, 42, 0.15) 0%,
+		transparent 100%
+	);
+}
+
+/* Green */
+.mtg-list .decklist__section-heading:has-text("Green"),
+.mtg-list .decklist__section-heading:has-text("Selesnya") {
+	border-left-color: #00733e;
+	background: linear-gradient(
+		90deg,
+		rgba(0, 115, 62, 0.15) 0%,
+		transparent 100%
+	);
+}
+
+/* Multicolor combinations */
+.mtg-list .decklist__section-heading:has-text("Bant"),
+.mtg-list .decklist__section-heading:has-text("Esper"),
+.mtg-list .decklist__section-heading:has-text("Jund"),
+.mtg-list .decklist__section-heading:has-text("Naya"),
+.mtg-list .decklist__section-heading:has-text("Grixis"),
+.mtg-list .decklist__section-heading:has-text("Abzan"),
+.mtg-list .decklist__section-heading:has-text("Temur"),
+.mtg-list .decklist__section-heading:has-text("Mardu"),
+.mtg-list .decklist__section-heading:has-text("Sultai"),
+.mtg-list .decklist__section-heading:has-text("Jeskai"),
+.mtg-list .decklist__section-heading:has-text("Four-Color"),
+.mtg-list .decklist__section-heading:has-text("Five-Color"),
+.mtg-list .decklist__section-heading:has-text("Multicolor") {
+	border-left-color: #ffd700;
+	background: linear-gradient(
+		90deg,
+		rgba(255, 215, 0, 0.15) 0%,
+		transparent 100%
+	);
+}
+
+/* Colorless */
+.mtg-list .decklist__section-heading:has-text("Colorless") {
+	border-left-color: #cccccc;
+	background: linear-gradient(
+		90deg,
+		rgba(204, 204, 204, 0.15) 0%,
+		transparent 100%
+	);
+}
+
+/* Lands */
+.mtg-list .decklist__section-heading:has-text("Lands") {
+	border-left-color: #8b4513;
+	background: linear-gradient(
+		90deg,
+		rgba(139, 69, 19, 0.15) 0%,
+		transparent 100%
+	);
+}
+
+/* Alternative approach using JavaScript-applied classes */
+.mtg-color-white {
+	border-left-color: #fffbd5 !important;
+	background: linear-gradient(
+		90deg,
+		rgba(255, 251, 213, 0.1) 0%,
+		transparent 100%
+	) !important;
+}
+.mtg-color-blue {
+	border-left-color: #0e68ab !important;
+	background: linear-gradient(
+		90deg,
+		rgba(14, 104, 171, 0.15) 0%,
+		transparent 100%
+	) !important;
+}
+.mtg-color-black {
+	border-left-color: #150b00 !important;
+	background: linear-gradient(
+		90deg,
+		rgba(21, 11, 0, 0.15) 0%,
+		transparent 100%
+	) !important;
+}
+.mtg-color-red {
+	border-left-color: #d3202a !important;
+	background: linear-gradient(
+		90deg,
+		rgba(211, 32, 42, 0.15) 0%,
+		transparent 100%
+	) !important;
+}
+.mtg-color-green {
+	border-left-color: #00733e !important;
+	background: linear-gradient(
+		90deg,
+		rgba(0, 115, 62, 0.15) 0%,
+		transparent 100%
+	) !important;
+}
+.mtg-color-multicolor {
+	border-left-color: #ffd700 !important;
+	background: linear-gradient(
+		90deg,
+		rgba(255, 215, 0, 0.15) 0%,
+		transparent 100%
+	) !important;
+}
+.mtg-color-colorless {
+	border-left-color: #cccccc !important;
+	background: linear-gradient(
+		90deg,
+		rgba(204, 204, 204, 0.15) 0%,
+		transparent 100%
+	) !important;
+}
+.mtg-color-lands {
+	border-left-color: #8b4513 !important;
+	background: linear-gradient(
+		90deg,
+		rgba(139, 69, 19, 0.15) 0%,
+		transparent 100%
+	) !important;
+}
+
 /* Commander heading styling */
 .commander-heading {
 	color: var(--interactive-accent);
