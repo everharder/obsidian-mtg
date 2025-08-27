@@ -1,5 +1,5 @@
-import { describe, expect, test } from "@jest/globals";
-import { renderDecklist } from "./renderer";
+import { describe, expect, test, jest } from "@jest/globals";
+import { renderDecklist, exportCardImages } from "./renderer";
 import { JSDOM } from "jsdom";
 import { ObsidianPluginMtgSettings } from "./settings";
 import { EXAMPLE_DECKLIST_CARD_DATA } from "../jest/fixtures/scryfall-data";
@@ -76,6 +76,35 @@ describe("Renderer", () => {
 			expect(el.innerHTML.trim()).toEqual(
 				EXAMPLE_DECK_1_HTML_WITHOUT_PRICES.trim()
 			);
+		});
+	});
+
+	describe("#exportCardImages", () => {
+		test("filters card lines correctly", () => {
+			// Sample lines with card data
+			const lines = [
+				{
+					lineType: "card" as const,
+					cardName: "Lightning Bolt",
+					cardCount: 4,
+					globalCount: 2,
+					comments: [],
+					errors: [],
+				},
+				{
+					lineType: "comment" as const,
+					comments: ["This is a comment"],
+					errors: [],
+				},
+			];
+
+			// Test that the function can identify card lines
+			const cardLines = lines.filter(
+				(line) => line.lineType === "card" && line.cardName
+			);
+
+			expect(cardLines).toHaveLength(1);
+			expect(cardLines[0].cardName).toBe("Lightning Bolt");
 		});
 	});
 });

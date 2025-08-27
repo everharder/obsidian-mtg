@@ -149,6 +149,45 @@ span.comment {
 	margin-bottom: 15px;
 }
 
+/* Export button styling - positioned at bottom right */
+.mtg-export-container {
+	position: relative;
+	text-align: right;
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
+.mtg-export-button {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 6px;
+	padding: 8px 16px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	min-width: 120px;
+}
+
+.mtg-export-button:hover:not(:disabled) {
+	background-color: var(--interactive-accent-hover);
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mtg-export-button:active {
+	transform: translateY(0);
+}
+
+.mtg-export-button:disabled {
+	background-color: var(--background-modifier-border);
+	color: var(--text-muted);
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
+}
+
 .mtg-search-container {
 	margin-bottom: 0;
 }
@@ -545,16 +584,25 @@ span.comment {
 
 	.mobile-card-item .comment {
 		flex: 0 0 auto;
-		max-width: 60px;
+		max-width: 80px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		font-size: 12px;
+		margin-right: 4px;
 	}
 
-	/* Hide prices on mobile */
-	.mobile-card-item .card-price {
+	/* Hide prices on mobile for decklists only, but show for mtg-list */
+	.decklist .mobile-card-item .card-price {
 		display: none;
+	}
+
+	.mtg-list .mobile-card-item .card-price {
+		flex: 0 0 auto;
+		min-width: 50px;
+		font-size: 12px;
+		text-align: right;
+		font-weight: 500;
 	}
 
 	/* Smaller section headings */
@@ -572,6 +620,19 @@ span.comment {
 	/* Hide advanced controls on mobile */
 	.mobile-header .mtg-advanced-controls {
 		display: none;
+	}
+
+	/* Compact export button on mobile */
+	.mtg-list .mtg-export-container {
+		margin-top: 15px;
+		text-align: center;
+	}
+
+	.mtg-list .mtg-export-button {
+		font-size: 13px;
+		padding: 8px 12px;
+		min-width: auto;
+		width: auto;
 	}
 
 	/* Hide statistics on mobile for more compact view */

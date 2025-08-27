@@ -929,7 +929,8 @@ export const createAdvancedControls = (
 export const getCardPrice = (
 	cardName: string,
 	cardDataById: Record<string, CardData>,
-	settings: ObsidianPluginMtgSettings
+	settings: ObsidianPluginMtgSettings,
+	isGenericList = false
 ) => {
 	const cardId = nameToId(cardName);
 	const cardData = cardDataById[cardId];
@@ -937,8 +938,8 @@ export const getCardPrice = (
 	const hidePrices = settings.decklist.hidePrices;
 	const mobileMode = settings.decklist.mobileMode;
 
-	// Hide prices if explicitly disabled or in mobile mode
-	if (!cardData || hidePrices || mobileMode) {
+	// Hide prices if explicitly disabled or in mobile mode (but only for decklists, not generic lists)
+	if (!cardData || hidePrices || (mobileMode && !isGenericList)) {
 		return null;
 	} else {
 		if (preferredCurrency === "eur") {
@@ -949,6 +950,202 @@ export const getCardPrice = (
 			return cardData.prices?.usd || null;
 		}
 	}
+};
+
+export const exportCardImages = async (
+	lines: Line[],
+	cardDataById: Record<string, CardData>,
+	settings: ObsidianPluginMtgSettings
+): Promise<void> => {
+	// Filter to only card lines with valid card data
+	const cardLines = lines.filter(
+		(line) =>
+			line.lineType === "card" &&
+			line.cardName &&
+			cardDataById[nameToId(line.cardName)]
+	);
+
+	if (cardLines.length === 0) {
+		console.warn("No cards with image data found for export");
+		return;
+	}
+
+	// Create HTML content for export
+	let htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>MTG Card Images Export</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 20px;
+			background-color: #f5f5f5;
+		}
+		.header {
+			text-align: center;
+			margin-bottom: 30px;
+			color: #333;
+		}
+		.cards-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			gap: 20px;
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+		.card-item {
+			background: white;
+			border-radius: 12px;
+			padding: 15px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			text-align: center;
+		}
+		.card-image {
+			width: 100%;
+			max-width: 200px;
+			height: auto;
+			border-radius: 8px;
+			margin-bottom: 10px;
+		}
+		.card-info {
+			margin-top: 10px;
+		}
+		.card-name {
+			font-weight: bold;
+			font-size: 14px;
+			margin-bottom: 5px;
+			color: #333;
+		}
+		.card-details {
+			font-size: 12px;
+			color: #666;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.card-count {
+			font-weight: 500;
+		}
+		.card-price {
+			font-weight: 500;
+			color: #2e7d32;
+		}
+		@media print {
+			body { background-color: white; }
+			.card-item { break-inside: avoid; }
+		}
+	</style>
+</head>
+<body>
+	<div class="header">
+		<h1>MTG Card Images</h1>
+		<p>Exported on ${new Date().toLocaleDateString()}</p>
+	</div>
+	<div class="cards-grid">
+`;
+
+	// Add each card to the HTML
+	for (const line of cardLines) {
+		if (!line.cardName) continue;
+
+		const cardId = nameToId(line.cardName);
+		const cardData = cardDataById[cardId];
+		if (!cardData) continue;
+
+		// Get card image URL
+		let imageUrl = "";
+		if (cardData.image_uris?.large) {
+			imageUrl = cardData.image_uris.large;
+		} else if (
+			cardData.card_faces &&
+			cardData.card_faces[0]?.image_uris?.large
+		) {
+			imageUrl = cardData.card_faces[0].image_uris.large;
+		}
+
+		if (!imageUrl) continue;
+
+		// Get card price
+		const cardPrice = getCardPrice(
+			line.cardName,
+			cardDataById,
+			settings,
+			true
+		);
+		const priceDisplay = cardPrice
+			? `${currencyMapping[settings.decklist.preferredCurrency]}${(
+					parseFloat(cardPrice) * (line.cardCount || 1)
+			  ).toFixed(2)}`
+			: "";
+
+		htmlContent += `
+		<div class="card-item">
+			<img src="${imageUrl}" alt="${cardData.name}" class="card-image" loading="lazy">
+			<div class="card-info">
+				<div class="card-name">${cardData.name}</div>
+				<div class="card-details">
+					<span class="card-count">${line.cardCount}x</span>
+					${priceDisplay ? `<span class="card-price">${priceDisplay}</span>` : ""}
+				</div>
+			</div>
+		</div>
+`;
+	}
+
+	htmlContent += `
+	</div>
+</body>
+</html>
+`;
+
+	// Create and download the HTML file
+	const blob = new Blob([htmlContent], { type: "text/html" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = `mtg-cards-export-${new Date()
+		.toISOString()
+		.slice(0, 10)}.html`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+};
+
+export const createExportButton = (
+	headerEl: Element,
+	lines: Line[],
+	cardDataById: Record<string, CardData>,
+	settings: ObsidianPluginMtgSettings
+): HTMLElement => {
+	const exportContainer = createDiv(headerEl, {
+		cls: "mtg-export-container",
+	});
+
+	const exportButton = document.createElement("button");
+	exportButton.textContent = "Export Images";
+	exportButton.classList.add("mtg-export-button");
+	exportButton.title = "Export card images as HTML file";
+
+	exportButton.addEventListener("click", async () => {
+		exportButton.disabled = true;
+		exportButton.textContent = "Exporting...";
+
+		try {
+			await exportCardImages(lines, cardDataById, settings);
+		} catch (error) {
+			console.error("Export failed:", error);
+		} finally {
+			exportButton.disabled = false;
+			exportButton.textContent = "Export Images";
+		}
+	});
+
+	exportContainer.appendChild(exportButton);
+	return exportContainer;
 };
 
 export const parseLines = (
@@ -1558,7 +1755,8 @@ export const renderDecklist = async (
 					cardPrice = getCardPrice(
 						line.cardName,
 						cardDataByCardId,
-						settings
+						settings,
+						isGenericList
 					);
 				}
 
@@ -1876,8 +2074,12 @@ export const renderDecklist = async (
 				).reduce((acc, cardId) => {
 					const countNeeded = sectionMissingCardCounts[cardId];
 					const cardPrice: number = parseFloat(
-						getCardPrice(cardId, cardDataByCardId, settings) ||
-							"0.00"
+						getCardPrice(
+							cardId,
+							cardDataByCardId,
+							settings,
+							isGenericList
+						) || "0.00"
 					);
 					return acc + cardPrice * countNeeded;
 				}, 0.0);
@@ -1981,7 +2183,12 @@ export const renderDecklist = async (
 
 				// Retrieve price
 				const cardPrice: number = parseFloat(
-					getCardPrice(cardName, cardDataByCardId, settings) || "0.00"
+					getCardPrice(
+						cardName,
+						cardDataByCardId,
+						settings,
+						isGenericList
+					) || "0.00"
 				);
 
 				totalCostOfBuylist =
@@ -2081,6 +2288,16 @@ export const renderDecklist = async (
 	// Add statistics section (only for decklists, not generic lists)
 	if (!isGenericList) {
 		createStatisticsSection(
+			containerEl,
+			parsedLines,
+			cardDataByCardId,
+			settings
+		);
+	}
+
+	// Add export button for mtg-list at bottom right
+	if (isGenericList) {
+		createExportButton(
 			containerEl,
 			parsedLines,
 			cardDataByCardId,
